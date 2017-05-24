@@ -72,9 +72,8 @@ COMMANDS
 
 (defun list-systems (argv)
   (declare (ignore argv))
-  (if (probe-file +system-list-pathname+)
-      (format t "~{~a~%~}" (parse-systems +system-list-pathname+))
-      (format t "there is no system list. if you 'tap', it'll be create!~%")))
+  (when (probe-file +system-list-pathname+)
+    (format t "~{~a~%~}" (parse-systems +system-list-pathname+))))
 
 (defun tap-system (argv)
   (let ((system-asd (first argv)))
