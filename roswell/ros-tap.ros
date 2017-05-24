@@ -8,7 +8,8 @@ exec ros -Q -- $0 "$@"
 
 (defpackage :ros.script.ros-tap.3704598400
   (:use :cl)
-  (:export :list-systems
+  (:export :clear-system
+           :list-systems
            :tap-system
            :untap-system))
 (in-package :ros.script.ros-tap.3704598400)
@@ -64,6 +65,11 @@ COMMANDS
                  :type "lisp"
                  :directory (pathname-directory (ql:qmerge "local-init/"))))
 
+(defun clear-system (argv)
+  (declare (ignore argv))
+  (when (probe-file +system-list-pathname+)
+    (delete-file +system-list-pathname+)))
+
 (defun list-systems (argv)
   (declare (ignore argv))
   (if (probe-file +system-list-pathname+)
@@ -90,6 +96,7 @@ COMMANDS
 (defun main (&rest argv)
   (let ((command (first argv)))
     (case (intern (string-upcase command) :keyword)
+      (:clear (clear-system (rest argv)))
       (:list (list-systems (rest argv)))
       (:tap (tap-system (rest argv)))
       (:untap (untap-system (rest argv)))
