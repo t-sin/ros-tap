@@ -1,0 +1,94 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#| Add/Remove your project ASD file into quicklisp local-init
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf))
+
+(defpackage :ros.script.ros-tap.3704598400
+  (:use :cl)
+  (:export :list-systems
+           :tap-system
+           :untap-system))
+(in-package :ros.script.ros-tap.3704598400)
+
+
+(defvar *subcommands*
+  '(list-systems tap-system untap-system clear-system))
+
+(defvar +usage+ "
+usage: ros tap COMMAND [PARAMS...]
+
+maintain local projects when initially loaded with quicklisp.
+
+COMMANDS
+    list            list systems when loaded with quicklisp.
+    tap ASDFILE     add ASDFILE to initially loading systems.
+    untap ASDNAME   remove ASDFILE to initially loading systems.
+    clear           clear initially loading system list.
+")
+
+
+(defun add-system (system system-list)
+  (if (member system system-list :test #'equalp)
+      system-list
+      (append system-list (list system))))
+
+(defun remove-system (system system-list)
+  (remove system system-list :test #'equalp))
+
+(defun parse-systems (system-list-pathname)
+  (with-open-file (in system-list-pathname)
+    (progn (read in)
+           (read in)
+           (eval (third (read in))))))
+
+(defun render-systems (system-list system-list-pathname)
+  (with-open-file (out system-list-pathname
+                       :direction :output
+                       :if-exists :supersede)
+    (format out "~s~%" '(defpackage :ros-tap (:use :cl)))
+    (format out "~s~%" '(in-package :ros-tap))
+    (format out "~s~%" `(defvar +system-list+ (quote ,system-list)))
+    (format out "~s~%" '(loop :for s :in +system-list+ :do (asdf:load-asd s)))
+    nil))
+
+
+(defvar +system-list-name+ "ros-tap-system-list")
+(defvar +system-list-filename+
+  (make-pathname :name +system-list-name+
+                 :type "lisp"))
+(defvar +system-list-pathname+
+  (make-pathname :name +system-list-name+
+                 :type "lisp"
+                 :directory (pathname-directory (ql:qmerge "local-init/"))))
+
+(defun list-systems (argv)
+  (declare (ignore argv))
+  (if (probe-file +system-list-pathname+)
+      (format t "~{~a~%~}" (parse-systems +system-list-pathname+))
+      (format t "there is no system list. if you 'tap', it'll be create!~%")))
+
+(defun tap-system (argv)
+  (let ((system-asd (first argv)))
+    (if system-asd
+        (let ((system-list (when (probe-file +system-list-pathname+)
+                             (parse-systems +system-list-pathname+)))
+              (system (truename (pathname system-asd))))
+          (render-systems (add-system system system-list) +system-list-pathname+))
+      (format t "specify .asd file~%"))))
+
+(defun untap-system (argv)
+  (let ((system-asd (first argv)))
+    (when (and system-asd
+               (probe-file +system-list-pathname+))
+      (let ((system-list (parse-systems +system-list-pathname+))
+            (system (truename (pathname system-asd))))
+        (render-systems (remove-system system system-list) +system-list-pathname+)))))
+
+(defun main (&rest argv)
+  (declare (ignore argv))
+  (format t "specify subcommand.~a~%" +usage+)
+  (uiop:quit 1))
+;;; vim: set ft=lisp lisp:
