@@ -88,7 +88,10 @@ COMMANDS
         (render-systems (remove-system system system-list) +system-list-pathname+)))))
 
 (defun main (&rest argv)
-  (declare (ignore argv))
-  (format t "specify subcommand.~a~%" +usage+)
-  (uiop:quit 1))
+  (let ((command (first argv)))
+    (case (intern (string-upcase command) :keyword)
+      (:list (list-systems (rest argv)))
+      (:tap (tap-system (rest argv)))
+      (:untap (untap-system (rest argv)))
+      (t (format t "unkown command: '~a'~%~a~%" command +usage+)))))
 ;;; vim: set ft=lisp lisp:
