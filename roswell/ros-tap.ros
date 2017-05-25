@@ -21,13 +21,12 @@ exec ros -Q -- $0 "$@"
 (defvar +usage+ "
 usage: ros tap COMMAND [PARAMS...]
 
-manage local projects loaded when quicklisp initialized.
+add/remove local project to projects loaded when quicklisp initialized.
 
 COMMANDS
-    list            list systems loaded when quicklisp
-                      inisitalized,
+    list            list systems loaded when quicklisp inisitalized,
     tap ASDFILE     add ASDFILE to initially loaded systems.
-    untap ASDNAME   remove ASDFILE to initially loaded systems.
+    untap ASDFILE   remove ASDFILE to initially loaded systems.
     clear           clear initially loading system list.
 ")
 
